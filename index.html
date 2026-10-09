@@ -44,6 +44,23 @@
     white-space: nowrap;
   }
 
+  /* Two lines stacked and centered as one compact overlay */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: min(0.5vw, 0.9vh);
+  }
+  /* Second line: same style, ~72% of the first line's size */
+  .line2 {
+    font-size: min(4.6vw, 8.3vh);
+  }
+  /* Offset the idle pulse and shimmer so the two lines breathe a little differently */
+  .line2 .glow { animation-delay: -1.3s; }
+  .line2 .shine .ch {
+    animation-delay: calc(2s + var(--i) * 0.04s), calc(1.2s + var(--i) * 0.09s);
+  }
+
   /* One letter. Every layer has identical letters, so they spin together. */
   .ch {
     display: inline-block;
@@ -286,15 +303,14 @@
 </head>
 <body>
 <div class="stage">
-  <div class="line" id="line" role="img" aria-label="200 Coins = 1 Λεπτό"></div>
+  <div class="stack" id="stack"></div>
 </div>
 
 <script>
   // Builds the letters (one span per letter, in 4 identical layers) and the 3D coin once.
   // All motion afterwards is pure CSS, so there are no timers and nothing to leak.
   (function () {
-    var PARTS = ['200 Coins', null, '= 1 Λεπτό'];   // null = where the coin goes
-    var line = document.getElementById('line');
+    var stack = document.getElementById('stack');
 
     function coinHTML() {
       var face = '<i class="rim"></i><i class="field"></i><i class="gloss"></i>';
@@ -307,12 +323,12 @@
              '<div class="cface back">' + face + '</div></div></div></div>';
     }
 
-    function buildLayer(cls, withCoin) {
+    function buildLayer(line, parts, cls, withCoin) {
       var layer = document.createElement('div');
       layer.className = 'layer ' + cls;
       layer.setAttribute('aria-hidden', 'true');
       var idx = 0;
-      PARTS.forEach(function (part) {
+      parts.forEach(function (part) {
         if (part === null) {
           var slot = document.createElement('i');
           slot.className = 'slot';
@@ -337,10 +353,21 @@
       line.appendChild(layer);
     }
 
-    buildLayer('glow',  false);
-    buildLayer('body',  false);
-    buildLayer('face',  true);
-    buildLayer('shine', false);
+    // parts: text pieces; null = where the coin goes
+    function createLine(parts, label, extraClass, withCoin) {
+      var line = document.createElement('div');
+      line.className = 'line' + (extraClass ? ' ' + extraClass : '');
+      line.setAttribute('role', 'img');
+      line.setAttribute('aria-label', label);
+      buildLayer(line, parts, 'glow',  false);
+      buildLayer(line, parts, 'body',  false);
+      buildLayer(line, parts, 'face',  withCoin);
+      buildLayer(line, parts, 'shine', false);
+      stack.appendChild(line);
+    }
+
+    createLine(['200 Coins', null, '= 1 Λεπτό'], '200 Coins = 1 Λεπτό', '', true);
+    createLine(['1 Follow = 3 Δευτερόλεπτα'], '1 Follow = 3 Δευτερόλεπτα', 'line2', false);
   })();
 </script>
 </body>
